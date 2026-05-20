@@ -3,37 +3,56 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { Input } from "./Input";
 import { useState } from "react";
 import { Button } from "./Button";
-import { ICountry } from "@/app/service/crypto-market.service";
-import Image from "next/image";
-import imageLoader from "@/app/image/loader";
-
-type FormValues = {
-    email?: string;
-    phone_number?: string;
-    password: string;
-}
-type LoginMethod = "Email" | "Mobile Number";
-const DEFAULT_LOGIN_METHOD = "Email" as LoginMethod;
+import { loginWithEmail, loginWithPhoneNumber } from "@/app/service/crypto-market.service";
+import { useRouter } from "next/navigation";
+import InputPhone from "./InputPhone";
+import type { ICountry } from "@/types/country";
+import type { FormValues, LoginMethod } from "@/types/forms";
+import { DEFAULT_LOGIN_METHOD } from "@/variables";
+import Loading from "./Loading";
 
 export function LoginForm({ countries }: { countries: ICountry[] }) {
-    const { register, handleSubmit } = useForm<FormValues>();
+    const router = useRouter();
+    const { register, handleSubmit, setError, formState: { errors } } = useForm<FormValues>();
     const [loginMethod, setLoginMethod] = useState<LoginMethod>(DEFAULT_LOGIN_METHOD);
     const [isVisible, setIsVisible] = useState<boolean>(false);
     const [selectedCountry, setSelectedCountry] = useState<ICountry | null>(() => {
         return countries.length > 0 ? countries[0] : null;
     });
-    const onSubmit: SubmitHandler<FormValues> = (data) => {
-        console.log(data);
+    const [loading, setLoading] = useState<boolean>(false);
+    
+    const onSubmit: SubmitHandler<FormValues> = async (data: FormValues) => {
+        setLoading(true);
+        try {
+            if (loginMethod === "Email") {
+                if (!data.email) return;
+                await loginWithEmail(data.email, data.password).then(() => {
+                    router.push("/otp-verification"); 
+                });
+            }
+            if (!data.phone) return;
+            await loginWithPhoneNumber(data.phone, data.password).then(() => {
+                router.push("/otp-verification"); 
+            });
+        } catch (error) {
+            const errorBody = (error as { body?: { message?: string; data?: { field?: string } } })?.body;
+            const field = errorBody?.data?.field as "email" | "phone" | "password" | undefined;
+            const message = errorBody?.message ?? "Login failed";
+            if (field) {
+                setError(field, { type: "manual", message });
+                return;
+            }
+        } finally {
+            setLoading(false);
+        }
     }
     
 
-    const toggleVisibility = () => setIsVisible((prev) => !prev);
+    const toggleVisibility = () => setIsVisible((prev: boolean) => !prev);
 
     const loginWith = (method: LoginMethod) => {
         setLoginMethod(method);
     }
-
-    console.log(selectedCountry);
 
     return (
         <>
@@ -44,63 +63,18 @@ export function LoginForm({ countries }: { countries: ICountry[] }) {
                     type="email"
                     id="email"
                     placeholder="username@gmail.com"
-                    switchText="Mobile Number"
+                    switchText="Phone Number"
                     {...register("email")}
-                    onChangeLoginMethod={() => loginWith("Mobile Number")}
+                    error={errors.email?.message}
+                    onChangeLoginMethod={() => loginWith("Phone Number")}
                 />
             ) : (
-                <label htmlFor="phone_number" className="flex flex-col text-sm font-medium">
-                    <span className="flex justify-between text-base font-medium">
-                        Mobile Number
-                        <span
-                            className="text-primary text-base font-medium hover:cursor-pointer"
-                            onClick={() => loginWith("Email")}
-                        >
-                            Sign In with Email
-                        </span>
-                    </span>
-                    <span className="mt-1 flex rounded-md border border-[#CDD5E9]">
-                        <span className="flex items-center gap-2 border-r border-[#CDD5E9] px-3">
-                            {selectedCountry ? (
-                                <Image
-                                    loader={imageLoader}
-                                    src={selectedCountry.code.toLowerCase()}
-                                    alt={selectedCountry.name}
-                                    width={20}
-                                    height={20}
-                                />
-                            ) : null}
-                            <select
-                                aria-label="Country dial code"
-                                className="bg-transparent text-base appearance-none focus:outline-none"
-                                value={selectedCountry?.code ?? ""}
-                                onChange={(event) => {
-                                    const nextCountry = countries.find(
-                                        (country) => country.code === event.target.value
-                                    );
-                                    setSelectedCountry(nextCountry ?? null);
-                                }}
-                                disabled={countries.length === 0}
-                            >
-                                <option value="" disabled>
-                                    Select
-                                </option>
-                                {countries.map((country) => (
-                                    <option key={country.code} value={country.code}>
-                                        {country.dial_code}
-                                    </option>
-                                ))}
-                            </select>
-                        </span>
-                        <input
-                            type="tel"
-                            id="phone_number"
-                            placeholder="Enter your number"
-                            className="block w-full rounded-r-md px-3 py-3 text-base focus:outline-none placeholder:text-base"
-                            {...register("phone_number")}
-                        />
-                    </span>
-                </label>
+                <InputPhone 
+                countries={countries} 
+                selectedCountry={selectedCountry} 
+                setSelectedCountry={setSelectedCountry} 
+                onClickLoginWithEmail={() => loginWith("Email")} 
+                register={register} errors={errors}/>
             )}
            <Input 
                 label="Password" 
@@ -108,12 +82,13 @@ export function LoginForm({ countries }: { countries: ICountry[] }) {
                 id="password" 
                 placeholder="Enter your password" 
                 {...register("password")} 
+                error={errors.password?.message}
                 toggleVisibility={toggleVisibility}
                 isVisible={isVisible}      
             />
         </form>
-        <span className="mt-1 text-primary text-base font-medium hover:cursor-pointer">Forgot password?</span>
-        <Button text="Sign In" type="submit" form="login-form" className="mt-6" />
+        <span className="mt-1 text-primary text-base  hover:cursor-pointer">Forgot password?</span>
+        <Button text={loading ? <Loading type="secondary" /> : "Sign In"} type="submit" form="login-form" className="mt-6" />
         </>
     );
 

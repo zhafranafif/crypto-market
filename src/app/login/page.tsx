@@ -4,7 +4,7 @@ import Image from "next/image";
 import { getCountries } from "../service/crypto-market.service";
 
 export default async function Login() {
-    const countries = await getCountries();
+    const { data: countries } = await getCountries();
 
     return (
        <div className="w-full h-screen flex items-center">

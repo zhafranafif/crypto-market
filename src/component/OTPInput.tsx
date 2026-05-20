@@ -1,26 +1,54 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "./Button";
+import { OtpVerification } from "@/app/service/crypto-market.service";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import type { OTPInputProps } from "@/types/forms";
+import Loading from "./Loading";
 
-
-export default function OTPInput() {
-    const [otp, setOtp] = useState<string[]>(new Array(6).fill(""));
+export default function OTPInput({ otpVerificationData }: OTPInputProps) {
+    const router = useRouter();
+    const parsedOtpVerificationData = otpVerificationData ? JSON.parse(otpVerificationData) : null;
+    const [otpState, setOtp] = useState<string[]>(new Array(6).fill(""));
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const [isVerifying, setIsVerifying] = useState<boolean>(false);
+
+    useEffect(() => {
+       if(!parsedOtpVerificationData?.otpExpiresAt) return;
+       
+       const remainingTime = parsedOtpVerificationData.otpExpiresAt - Date.now();
+       if (remainingTime <= 0) {
+           toast.error("OTP has expired. Please request a new one.", {
+                duration: 3000,
+           });
+           router.push("/login");
+       }
+
+       const timer = setTimeout(() => {
+            toast.error("OTP has expired. Please request a new one.", {
+                duration: 3000,
+           });
+           router.push("/login");
+       }, remainingTime);
+
+       return () => clearTimeout(timer);
+    }, [parsedOtpVerificationData, router]);
 
     const handleChange = (value: string, index: number) => {
         if (isNaN(Number(value))) return;
         
-        const newOtp = [...otp];
+        const newOtp = [...otpState];
         newOtp[index] = value;
         setOtp(newOtp);
 
         if (value && index < 5) {
-            console.log(inputRefs.current[index + 1], "refs");
             inputRefs.current[index + 1]?.focus();
         }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-        if (e.key === "Backspace" && !otp[index] && index > 0) {
+        if (e.key === "Backspace" && !otpState[index] && index > 0) {
             inputRefs.current[index - 1]?.focus();
         }
     };
@@ -28,7 +56,7 @@ export default function OTPInput() {
     const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
         e.preventDefault();
         const pasteData = e.clipboardData.getData("text").slice(0, 6).split("");
-        const newOtp = [...otp];
+        const newOtp = [...otpState];
 
         pasteData.forEach((char, idx) => {
             if (!isNaN(Number(char)) && idx < 6) {
@@ -40,9 +68,35 @@ export default function OTPInput() {
         setOtp(newOtp);
     };
 
+    const formatOtp: string = otpState.join("");
+
+    const handleOtpVerification = async () => {
+        const matchesOtp = formatOtp === parsedOtpVerificationData?.otp;
+        if(!matchesOtp) {
+           toast.error("Invalid OTP. Please try again.", {
+                duration: 3000,
+           });
+           return;
+        }
+        try {
+            setIsVerifying(true);
+            await OtpVerification(formatOtp, parsedOtpVerificationData.phone).then(() => {
+                router.push("/dashboard");
+            })
+        } catch (error) {
+            const errorMessage = (error as { body?: { message?: string } })?.body?.message ?? "OTP verification failed";
+            toast.error(`OTP verification failed: ${errorMessage}`, {
+                duration: 3000,
+            });
+        } finally {
+            setIsVerifying(false);
+        }
+    }
+
     return (
+        <>
         <div className="flex space-x-2 mt-6">
-            {otp.map((value, index) => (
+            {otpState.map((value, index) => (
                 <div key={index} className="relative flex items-center">
                     <input
                         type="text"
@@ -62,5 +116,7 @@ export default function OTPInput() {
                 </div>
             ))}
         </div>
+        <Button text={isVerifying ? <Loading type="secondary" /> : "Confirm"} type="submit" className="mt-6 w-full" disabled={formatOtp.length !== 6} onClick={handleOtpVerification} />
+        </>
     );
 }
