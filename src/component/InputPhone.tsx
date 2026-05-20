@@ -60,14 +60,14 @@ export default function InputPhone({
                                         height={20}
                                     />
                                 ) : (
-                                    <span className="h-5 w-5 rounded-full bg-gray-200" />
+                                    <span className="h-5 w-5 rounded-full bg-background" />
                                 )}
                                 <span>{selectedCountry?.dial_code ?? "Country"}</span>
                             </button>
                             {isOpen ? (
                                 <div
                                     role="listbox"
-                                    className="absolute left-0 top-full z-20 mt-1 max-h-48 w-20 overflow-auto rounded-md border border-[#CDD5E9] bg-white shadow [&::-webkit-scrollbar]:hidden"
+                                    className="absolute left-0 top-full z-20 mt-1 max-h-48 w-23 overflow-auto rounded-md border border-[#CDD5E9] bg-white shadow [&::-webkit-scrollbar]:hidden"
                                 >
                                     {countries.map((country) => (
                                         <button

@@ -92,7 +92,7 @@ export default function DashboardClient({
                             </div>
                         </div>
                     ) : (
-                        <p className="text-gray-500">Select a crypto to see details.</p>
+                        <p className="text-gray-500 font-medium">Select a crypto to see details.</p>
                     )}
                 </div>
             </div>

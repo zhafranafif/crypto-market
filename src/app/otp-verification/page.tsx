@@ -27,7 +27,7 @@ export default async function OtpVerification() {
                     Confirm your phone
                     </h1>
 
-                    <p className=" text-base text-gray-600">
+                    <p className="text-base">
                     We send 6 digits code to{" "}
                     {otpData?.phone ? formatPhone(otpData.phone) : ""}
                     </p>

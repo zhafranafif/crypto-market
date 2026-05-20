@@ -19,7 +19,7 @@ export default function ProgressBar({ step, className }: { step: number; classNa
     return (
         <>
             {currentProgress !== 100 && (
-                <div className={`w-full bg-gray-200 h-4 ${className}`}>
+                <div className={`w-full bg-[#F5F7FC] h-4 ${className}`}>
                     <div
                         className="bg-primary h-4 transition-all duration-1000 ease-in-out"
                         style={{ width: `${progress}%` }}
