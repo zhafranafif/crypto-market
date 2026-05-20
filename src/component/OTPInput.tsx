@@ -22,14 +22,14 @@ export default function OTPInput({ otpVerificationData }: OTPInputProps) {
            toast.error("OTP has expired. Please request a new one.", {
                 duration: 3000,
            });
-           router.push("/login");
+           router.replace("/login");
        }
 
        const timer = setTimeout(() => {
             toast.error("OTP has expired. Please request a new one.", {
                 duration: 3000,
            });
-           router.push("/login");
+           router.replace("/login");
        }, remainingTime);
 
        return () => clearTimeout(timer);
@@ -80,8 +80,10 @@ export default function OTPInput({ otpVerificationData }: OTPInputProps) {
         }
         try {
             setIsVerifying(true);
-            await OtpVerification(formatOtp, parsedOtpVerificationData.phone).then(() => {
-                router.push("/dashboard");
+            await OtpVerification(formatOtp, parsedOtpVerificationData.phone).then((response) => {
+                if(response.status_code === 200) {
+                router.replace("/dashboard");
+                }
             })
         } catch (error) {
             const errorMessage = (error as { body?: { message?: string } })?.body?.message ?? "OTP verification failed";

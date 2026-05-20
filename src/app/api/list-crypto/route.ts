@@ -2,10 +2,17 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { API_BASE_URL } from "@/variables";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(){
     const token = (await cookies()).get("token")?.value;
+    if (!token) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const response = await fetch(`${API_BASE_URL}/list-crypto`, {
         method: "GET",
+        cache: "no-store",
         headers: {
             "Content-Type": "application/json",
             "Accept": "application/json",

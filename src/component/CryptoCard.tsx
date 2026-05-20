@@ -26,7 +26,7 @@ export default function CryptoCard({
             {image ? <Image src={image} alt={symbol} width={40} height={40}/>
             : <Image src={CryptoIcon} alt={symbol} width={40} height={40} />}
             <div className="flex flex-col gap-1.5">
-                <h1 className="text-base font-bold flex gap-1">{symbol} <span>{hot && <Image src={Fire} alt="Hot" width={16} height={16} />}</span></h1>
+                <h1 className="text-base font-bold flex gap-1">{symbol} <span>{hot && <Image src={Fire} alt="Hot" className="w-4 h-auto"/>}</span></h1>
                 <p>{name}</p>
             </div>
             </div>

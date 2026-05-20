@@ -27,12 +27,12 @@ export function LoginForm({ countries }: { countries: ICountry[] }) {
             if (loginMethod === "Email") {
                 if (!data.email) return;
                 await loginWithEmail(data.email, data.password).then(() => {
-                    router.push("/otp-verification"); 
+                    router.replace("/otp-verification"); 
                 });
             }
             if (!data.phone) return;
             await loginWithPhoneNumber(data.phone, data.password).then(() => {
-                router.push("/otp-verification"); 
+                router.replace("/otp-verification"); 
             });
         } catch (error) {
             const errorBody = (error as { body?: { message?: string; data?: { field?: string } } })?.body;

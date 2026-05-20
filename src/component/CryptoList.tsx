@@ -43,6 +43,11 @@ export default function CryptoList({
         };
     }, []);
 
+    const hasTabData =
+        tabQuery === "all" ||
+        tabQuery === "favorites" ||
+        cryptos.some((crypto) => crypto.type === tabQuery);
+
     const filteredCryptos = cryptos.filter((crypto: ICrypto) => {
         const cryptoName = crypto.name ?? "";
         const matchesSearch = cryptoName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -75,7 +80,13 @@ export default function CryptoList({
                             />
                         ))}
                         {filteredCryptos.length === 0 && (
-                            <p className="text-center text-gray-500 mt-4">We couldn’t find <span>&apos;{searchQuery}&apos;</span>. Try searching with a different keyword.</p>
+                            <p className="text-center text-gray-500 mt-4">
+                                {hasTabData ? (
+                                    <>We couldn&apos;t find <span>&apos;{searchQuery}&apos;</span>. Try searching with a different keyword.</>
+                                ) : (
+                                    <>No data available for this tab yet.</>
+                                )}
+                            </p>
                         )}
                     </>
                 )}
